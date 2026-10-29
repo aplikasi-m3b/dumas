@@ -11,6 +11,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- Chart.js untuk Grafik Pengaduan -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
@@ -70,8 +72,9 @@
         <button onclick="switchTab('form')" id="tabBtnForm" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-bold bg-white text-emerald-800 shadow transition flex items-center gap-1.5">
           <i class="fa-solid fa-paper-plane"></i> Buat Pengaduan
         </button>
-        <button onclick="switchTab('rekap')" id="tabBtnRekap" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold text-white hover:bg-emerald-600/60 transition flex items-center gap-1.5">
-          <i class="fa-solid fa-table-list"></i> Rekap Pengaduan
+        <!-- Tombol Rekap Pengaduan HANYA muncul jika login sebagai admin, humas, atau kepala -->
+        <button onclick="switchTab('rekap')" id="tabBtnRekap" class="hidden px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold text-white hover:bg-emerald-600/60 transition items-center gap-1.5">
+          <i class="fa-solid fa-chart-column"></i> Rekap & Grafik Pengaduan
         </button>
         <button onclick="showQrModal()" class="px-2.5 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-emerald-900/50 hover:bg-emerald-900 text-amber-300 transition flex items-center gap-1" title="Tampilkan Barcode/QR Aplikasi">
           <i class="fa-solid fa-qrcode text-base"></i> <span class="hidden md:inline">QR Code</span>
@@ -88,16 +91,32 @@
     <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm">
       <div class="flex items-center gap-2 text-amber-900 font-semibold">
         <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
-        <span>Login Sebagai: <strong id="loggedRoleName" class="underline"></strong></span>
+        <span>Login Aktif: <strong id="loggedRoleName" class="underline"></strong></span>
       </div>
       <div class="flex items-center gap-2">
-        <!-- Tombol Menu Khusus Admin untuk Ganti Token Fonnte & No HP Pimpinan -->
         <button onclick="openSettingsModal()" class="bg-blue-700 hover:bg-blue-800 text-white px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 shadow-xs transition">
-          <i class="fa-solid fa-sliders"></i> Pengaturan WA & Fonnte
+          <i class="fa-solid fa-sliders"></i> Pengaturan WA, Fonnte & Password
         </button>
         <button onclick="logoutAdmin()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1 shadow-xs transition">
           <i class="fa-solid fa-right-from-bracket"></i> Keluar
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= KETERANGAN BESAR KERAHASIAAN DATA PENGADU ================= -->
+  <div class="max-w-7xl w-full mx-auto px-4 pt-5">
+    <div class="bg-gradient-to-r from-amber-500 via-orange-500 to-red-600 text-white rounded-2xl p-4 sm:p-6 shadow-lg border-2 border-amber-200 flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+      <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0 text-3xl sm:text-4xl shadow-inner">
+        <i class="fa-solid fa-user-shield"></i>
+      </div>
+      <div>
+        <span class="inline-block bg-white text-red-700 text-[11px] sm:text-xs font-extrabold px-3 py-0.5 rounded-full uppercase tracking-wider mb-1 shadow-xs">
+          Jaminan Kerahasiaan Identitas
+        </span>
+        <h2 class="text-base sm:text-xl md:text-2xl font-extrabold leading-snug tracking-tight">
+          "Semua data pengadu akan dirahasiakan dan menjadi milik madrasah, tidak akan dipublikasikan."
+        </h2>
       </div>
     </div>
   </div>
@@ -115,13 +134,31 @@
           <div>
             <h2 class="text-base sm:text-lg font-bold text-slate-800">Formulir Aspirasi & Pengaduan Masyarakat</h2>
             <p class="text-xs sm:text-sm text-slate-600 mt-0.5">
-              Sampaikan kritik, saran, atau pengaduan Anda secara santun dan jelas. Data Anda akan langsung diterima oleh Wakil Kepala Bidang Humas dan Kepala MTsN 3 Banyuwangi.
+              Sampaikan pengaduan, kritik, saran, atau apresiasi Anda kepada MTsN 3 Banyuwangi.
             </p>
           </div>
         </div>
 
         <form id="formPengaduan" onsubmit="submitPengaduan(event)" class="p-5 sm:p-6 space-y-4">
-          <!-- Nama Lengkap -->
+
+          <!-- 1. KATEGORI LAPORAN (PALING ATAS) -->
+          <div class="bg-emerald-50/70 p-3.5 rounded-xl border border-emerald-200">
+            <label class="block text-xs sm:text-sm font-extrabold text-emerald-950 mb-1.5">
+              Kategori Laporan <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <i class="fa-solid fa-tags absolute left-3.5 top-3 text-emerald-700"></i>
+              <select id="inputKategori" required
+                class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-emerald-400 focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 outline-none text-sm font-bold text-slate-800 bg-white">
+                <option value="Pengaduan">Pengaduan</option>
+                <option value="Kritik">Kritik</option>
+                <option value="Saran">Saran</option>
+                <option value="Apresiasi">Apresiasi</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 2. NAMA LENGKAP -->
           <div>
             <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1">
               Nama Lengkap Pengadu <span class="text-red-500">*</span>
@@ -133,7 +170,7 @@
             </div>
           </div>
 
-          <!-- Grid No WA & Kategori -->
+          <!-- 3. NOMOR WHATSAPP & STATUS PENGADU -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1">
@@ -144,51 +181,69 @@
                 <input type="tel" id="inputWa" required placeholder="Contoh: 081234567890"
                   class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm" />
               </div>
-              <p class="text-[11px] text-slate-500 mt-1">Gunakan awalan 08xx (angka 0 otomatis tersimpan utuh).</p>
+              <p class="text-[11px] text-slate-500 mt-1">Gunakan awalan 08xx (angka 0 tersimpan utuh).</p>
             </div>
 
             <div>
               <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1">
-                Kategori Laporan <span class="text-red-500">*</span>
+                Status Pengadu <span class="text-red-500">*</span>
               </label>
               <div class="relative">
-                <i class="fa-solid fa-tag absolute left-3.5 top-3 text-slate-400"></i>
-                <select id="inputKategori" required
+                <i class="fa-solid fa-id-badge absolute left-3.5 top-3 text-slate-400"></i>
+                <select id="inputStatusPengadu" required onchange="handleStatusPengaduChange()"
                   class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm bg-white">
-                  <option value="Pengaduan">Pengaduan</option>
-                  <option value="Saran">Saran</option>
-                  <option value="Kritik">Kritik</option>
-                  <option value="Apresiasi / Pertanyaan">Apresiasi / Pertanyaan</option>
+                  <option value="" disabled selected>-- Pilih Status Pengadu --</option>
+                  <option value="Murid">Murid</option>
+                  <option value="Walimurid">Walimurid</option>
+                  <option value="Masyarakat">Masyarakat</option>
+                  <option value="Instansi Pemerintah">Instansi Pemerintah</option>
+                  <option value="Instansi Non-Pemerintah">Instansi Non-Pemerintah</option>
                 </select>
               </div>
             </div>
           </div>
 
-          <!-- Alamat / Hubungan dengan Sekolah -->
+          <!-- 4. PILIH SEMESTER OTOMATIS (MUNCUL JIKA STATUS PENGADU = MURID) -->
+          <div id="containerSemester" class="hidden bg-amber-50 p-3.5 rounded-xl border border-amber-300 transition-all">
+            <label class="block text-xs sm:text-sm font-bold text-amber-950 mb-1">
+              Pilih Semester (Khusus Murid) <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <i class="fa-solid fa-graduation-cap absolute left-3.5 top-3 text-amber-700"></i>
+              <select id="inputSemester"
+                class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-amber-400 focus:ring-2 focus:ring-amber-500 outline-none text-sm font-bold bg-white text-slate-800">
+                <option value="1">Semester 1</option>
+                <option value="3">Semester 3</option>
+                <option value="5">Semester 5</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 5. ALAMAT (ISIAN TERSENDIRI) -->
           <div>
             <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1">
-              Alamat / Status Pengadu (Wali Murid / Masyarakat Umum / Alumni) <span class="text-red-500">*</span>
+              Alamat Lengkap <span class="text-red-500">*</span>
             </label>
             <div class="relative">
               <i class="fa-solid fa-location-dot absolute left-3.5 top-3 text-slate-400"></i>
-              <input type="text" id="inputAlamat" required placeholder="Contoh: Wali Murid Kelas 8A / Warga Srono"
+              <input type="text" id="inputAlamat" required placeholder="Masukkan alamat lengkap tempat tinggal / instansi Anda"
                 class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm" />
             </div>
           </div>
 
-          <!-- Isi Pengaduan -->
+          <!-- 6. ISI PENGADUAN -->
           <div>
             <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1">
-              Isi Kritik / Saran / Pengaduan <span class="text-red-500">*</span>
+              Isi Pengaduan / Kritik / Saran / Apresiasi <span class="text-red-500">*</span>
             </label>
-            <textarea id="inputIsi" rows="4" required placeholder="Tuliskan detail kritik, saran, atau pengaduan Anda secara jelas..."
+            <textarea id="inputIsi" rows="4" required placeholder="Tuliskan detail laporan Anda secara jelas dan santun..."
               class="w-full p-3.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"></textarea>
           </div>
 
-          <!-- Ambil Foto Pengadu -->
+          <!-- 7. AMBIL FOTO PENGADU (HANYA KAMERA LANGSUNG, TANPA GALERI) -->
           <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
             <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-2">
-              Ambil Foto Pengadu <span class="text-red-500">*</span>
+              Ambil Foto Pengadu (Kamera Langsung) <span class="text-red-500">*</span>
             </label>
 
             <!-- Area Kamera Live -->
@@ -213,22 +268,18 @@
             <div id="photoPreviewContainer" class="hidden mb-3 text-center">
               <img id="photoPreview" src="" alt="Preview Foto Pengadu" class="w-44 h-44 object-cover rounded-xl mx-auto border-2 border-emerald-500 shadow" />
               <button type="button" onclick="resetPhoto()" class="mt-2 text-xs text-red-600 hover:underline font-bold flex items-center gap-1 mx-auto">
-                <i class="fa-solid fa-trash"></i> Hapus & Ambil Ulang Foto
+                <i class="fa-solid fa-trash"></i> Hapus & Ambil Ulang Foto Kamera
               </button>
             </div>
 
-            <!-- Tombol Pilihan Ambil Foto -->
-            <div id="photoButtons" class="flex flex-wrap gap-2">
-              <button type="button" onclick="startCamera()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-sm transition">
-                <i class="fa-solid fa-camera-retro"></i> Buka Kamera Langsung
+            <!-- Tombol Buka Kamera Langsung (Tanpa Upload Galeri) -->
+            <div id="photoButtons" class="flex">
+              <button type="button" onclick="startCamera()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-sm transition">
+                <i class="fa-solid fa-camera-retro text-base"></i> Buka Kamera & Ambil Foto Pengadu
               </button>
-              <label class="flex-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 cursor-pointer transition">
-                <i class="fa-solid fa-image text-emerald-600"></i> Kamera HP / Galeri
-                <input type="file" id="fileInputPhoto" accept="image/*" capture="user" onchange="handleFileSelect(event)" class="hidden" />
-              </label>
             </div>
             <p class="text-[11px] text-slate-500 mt-2">
-              <i class="fa-solid fa-circle-info text-emerald-600"></i> Wajib menyertakan foto diri pengadu sebagai verifikasi keaslian laporan.
+              <i class="fa-solid fa-lock text-emerald-600"></i> Pengambilan foto wajib menggunakan kamera langsung saat mengisi laporan (tidak dapat mengunggah dari galeri).
             </p>
           </div>
 
@@ -240,16 +291,17 @@
       </div>
     </section>
 
-    <!-- ==================== TAB 2: REKAP & RESPON PENGADUAN ==================== -->
-    <section id="sectionRekap" class="hidden space-y-5">
-      <!-- Ringkasan Statistik -->
+    <!-- ==================== TAB 2: REKAP & GRAFIK PENGADUAN (KHUSUS LOGIN ADMIN / HUMAS / KEPALA) ==================== -->
+    <section id="sectionRekap" class="hidden space-y-6">
+
+      <!-- Ringkasan Statistik Status Respon -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4">
           <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-xl font-bold">
             <i class="fa-solid fa-folder-open"></i>
           </div>
           <div>
-            <p class="text-xs text-slate-500 font-semibold uppercase">Total Pengaduan</p>
+            <p class="text-xs text-slate-500 font-semibold uppercase">Total Seluruh Laporan</p>
             <p id="statTotal" class="text-2xl font-extrabold text-slate-800">0</p>
           </div>
         </div>
@@ -275,7 +327,73 @@
         </div>
       </div>
 
-      <!-- Filter & Pencarian -->
+      <!-- ==================== GRAFIK PENGADUAN (DENGAN FILTER BULAN & TAHUN) ==================== -->
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200">
+          <div>
+            <h3 class="text-base sm:text-lg font-extrabold text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-chart-bar text-emerald-700"></i> Grafik Statistik Kategori Laporan
+            </h3>
+            <p class="text-xs text-slate-500">Rekapitulasi jumlah Pengaduan, Kritik, Saran, dan Apresiasi berdasarkan Bulan & Tahun</p>
+          </div>
+
+          <!-- Filter Bulan & Tahun Grafik -->
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
+              <label class="text-xs font-bold text-slate-600"><i class="fa-regular fa-calendar"></i> Bulan:</label>
+              <select id="chartFilterMonth" onchange="updateChartData()" class="bg-transparent text-xs font-bold text-slate-800 outline-none">
+                <option value="ALL">Semua Bulan</option>
+                <option value="01">Januari</option>
+                <option value="02">Februari</option>
+                <option value="03">Maret</option>
+                <option value="04">April</option>
+                <option value="05">Mei</option>
+                <option value="06">Juni</option>
+                <option value="07">Juli</option>
+                <option value="08">Agustus</option>
+                <option value="09">September</option>
+                <option value="10">Oktober</option>
+                <option value="11">November</option>
+                <option value="12">Desember</option>
+              </select>
+            </div>
+
+            <div class="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
+              <label class="text-xs font-bold text-slate-600">Tahun:</label>
+              <select id="chartFilterYear" onchange="updateChartData()" class="bg-transparent text-xs font-bold text-slate-800 outline-none">
+                <option value="ALL">Semua Tahun</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ringkasan Angka 4 Kategori Grafik -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4">
+          <div class="bg-rose-50 border border-rose-200 p-3 rounded-xl text-center">
+            <p class="text-xs font-bold text-rose-700 uppercase">Pengaduan</p>
+            <p id="countKatPengaduan" class="text-xl font-extrabold text-rose-800 mt-0.5">0</p>
+          </div>
+          <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl text-center">
+            <p class="text-xs font-bold text-amber-700 uppercase">Kritik</p>
+            <p id="countKatKritik" class="text-xl font-extrabold text-amber-800 mt-0.5">0</p>
+          </div>
+          <div class="bg-blue-50 border border-blue-200 p-3 rounded-xl text-center">
+            <p class="text-xs font-bold text-blue-700 uppercase">Saran</p>
+            <p id="countKatSaran" class="text-xl font-extrabold text-blue-800 mt-0.5">0</p>
+          </div>
+          <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-xl text-center">
+            <p class="text-xs font-bold text-emerald-700 uppercase">Apresiasi</p>
+            <p id="countKatApresiasi" class="text-xl font-extrabold text-emerald-800 mt-0.5">0</p>
+          </div>
+        </div>
+
+        <!-- Canvas Chart.js -->
+        <div class="relative w-full h-64 sm:h-72">
+          <canvas id="kategoriChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Filter & Pencarian Tabel Rekap -->
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
         <div class="flex flex-wrap items-center gap-2">
           <span class="text-xs font-bold text-slate-600 mr-1"><i class="fa-solid fa-filter"></i> Filter Status:</span>
@@ -293,7 +411,7 @@
         <div class="flex items-center gap-2 w-full sm:w-auto">
           <div class="relative flex-grow sm:w-64">
             <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-            <input type="text" id="searchInput" oninput="renderRekapTable()" placeholder="Cari nama, kategori, isi aduan..."
+            <input type="text" id="searchInput" oninput="renderRekapTable()" placeholder="Cari nama, status, isi aduan..."
               class="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-emerald-500 outline-none" />
           </div>
           <button onclick="fetchRekapData()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 shrink-0">
@@ -310,10 +428,10 @@
               <tr class="bg-slate-800 text-white text-xs uppercase tracking-wider">
                 <th class="py-3.5 px-4">No & Tanggal</th>
                 <th class="py-3.5 px-4">Data Pengadu</th>
-                <th class="py-3.5 px-4">Kategori & Isi Aduan</th>
+                <th class="py-3.5 px-4">Kategori & Isi Laporan</th>
                 <th class="py-3.5 px-4 text-center">Foto Pengadu</th>
                 <th class="py-3.5 px-4">Status & Respon Pimpinan</th>
-                <th id="thAksiPimpinan" class="py-3.5 px-4 text-center hidden">Aksi Pimpinan</th>
+                <th class="py-3.5 px-4 text-center">Aksi Pimpinan</th>
               </tr>
             </thead>
             <tbody id="rekapTableBody" class="divide-y divide-slate-200 text-xs sm:text-sm">
@@ -331,30 +449,34 @@
 
   </main>
 
-  <!-- ================= MODAL LOGIN PIMPINAN ================= -->
+  <!-- ================= MODAL LOGIN (USER DROPDOWN: admin, humas, kepala) ================= -->
   <div id="modalLogin" class="fixed inset-0 bg-black/60 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
       <div class="flex items-center justify-between pb-3 border-b border-slate-200">
         <h3 class="text-base font-extrabold text-slate-800 flex items-center gap-2">
-          <i class="fa-solid fa-user-lock text-emerald-700"></i> Login Pimpinan Sekolah
+          <i class="fa-solid fa-user-lock text-emerald-700"></i> Login Pengelola & Pimpinan
         </h3>
         <button onclick="closeLoginModal()" class="text-slate-400 hover:text-slate-600 text-lg">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
       <p class="text-xs text-slate-500 mt-2">
-        Khusus Wakil Kepala Bagian Humas & Kepala MTsN 3 Banyuwangi untuk merespon pengaduan dan mengelola pengaturan WA.
+        Pilih akun pengguna dan masukkan password sesuai yang terdaftar pada Sheet <strong>Pengaturan</strong>.
       </p>
       <form onsubmit="submitLogin(event)" class="mt-4 space-y-3.5">
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Username</label>
-          <input type="text" id="loginUser" required placeholder="Masukkan username"
-            class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" />
+          <label class="block text-xs font-bold text-slate-700 mb-1">Pilih User Login</label>
+          <select id="loginUser" required
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-bold text-slate-800 bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+            <option value="admin">admin (Administrator)</option>
+            <option value="humas">humas (Wakil Kepala Bagian Humas)</option>
+            <option value="kepala">kepala (Kepala Madrasah)</option>
+          </select>
         </div>
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">Password</label>
           <input type="password" id="loginPass" required placeholder="Masukkan password"
-            class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" />
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" />
         </div>
         <div class="pt-2 flex justify-end gap-2">
           <button type="button" onclick="closeLoginModal()" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700">
@@ -368,58 +490,67 @@
     </div>
   </div>
 
-  <!-- ================= MODAL KHUSUS ADMIN: PENGATURAN TOKEN FONNTE & NO HP PIMPINAN ================= -->
+  <!-- ================= MODAL KHUSUS ADMIN: PENGATURAN TOKEN FONNTE, NO HP & PASSWORD ================= -->
   <div id="modalSettings" class="fixed inset-0 bg-black/60 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between pb-3 border-b border-slate-200">
         <h3 class="text-base font-extrabold text-slate-800 flex items-center gap-2">
-          <i class="fa-solid fa-sliders text-blue-700"></i> Pengaturan WA & Token Fonnte
+          <i class="fa-solid fa-sliders text-blue-700"></i> Pengaturan WA, Fonnte & Password
         </h3>
         <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600 text-lg">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
-      <p class="text-xs text-slate-500 mt-2">
-        Ubah Token Fonnte serta nomor WhatsApp penerima notifikasi pengaduan baru. Nomor yang diawali angka <strong>0</strong> akan tersimpan utuh di Google Sheet.
-      </p>
 
       <form onsubmit="submitSaveSettings(event)" class="mt-4 space-y-3.5">
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">
             Token Fonnte <span class="text-red-500">*</span>
           </label>
-          <div class="relative">
-            <i class="fa-solid fa-key absolute left-3.5 top-3 text-slate-400 text-xs"></i>
-            <input type="text" id="settingTokenFonnte" required placeholder="Masukkan Token Fonnte"
-              class="w-full pl-9 pr-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none font-mono" />
-          </div>
+          <input type="text" id="settingTokenFonnte" required placeholder="Masukkan Token Fonnte"
+            class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none font-mono" />
         </div>
 
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">
             No. HP / WA Wakil Kepala Bagian Humas <span class="text-red-500">*</span>
           </label>
-          <div class="relative">
-            <i class="fa-brands fa-whatsapp absolute left-3.5 top-2.5 text-emerald-600 font-bold"></i>
-            <input type="tel" id="settingWaHumas" required placeholder="Contoh: 081234567890"
-              class="w-full pl-9 pr-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
-          </div>
+          <input type="tel" id="settingWaHumas" required placeholder="Contoh: 081234567890"
+            class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
         </div>
 
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">
-            No. HP / WA Kepala Sekolah <span class="text-red-500">*</span>
+            No. HP / WA Kepala Madrasah <span class="text-red-500">*</span>
           </label>
-          <div class="relative">
-            <i class="fa-brands fa-whatsapp absolute left-3.5 top-2.5 text-emerald-600 font-bold"></i>
-            <input type="tel" id="settingWaKepsek" required placeholder="Contoh: 081298765432"
-              class="w-full pl-9 pr-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+          <input type="tel" id="settingWaKepsek" required placeholder="Contoh: 081298765432"
+            class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+        </div>
+
+        <hr class="border-slate-200 my-2" />
+        <p class="text-xs font-extrabold text-slate-700">Password Login (Tersimpan di Sheet Pengaturan):</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Pass: admin</label>
+            <input type="text" id="settingPassAdmin" required
+              class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs font-mono" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Pass: humas</label>
+            <input type="text" id="settingPassHumas" required
+              class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs font-mono" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Pass: kepala</label>
+            <input type="text" id="settingPassKepala" required
+              class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs font-mono" />
           </div>
         </div>
 
         <div class="bg-blue-50 border border-blue-200 p-2.5 rounded-xl text-[11px] text-blue-900">
           <i class="fa-solid fa-shield-halved text-blue-700"></i>
-          <strong>Format Teks Otomatis:</strong> Angka <strong>0</strong> di depan nomor HP dijamin tidak akan hilang saat tersimpan di Google Sheet.
+          Nomor HP yang diawali angka <strong>0</strong> akan tersimpan utuh di Google Sheet tanpa kehilangan angka 0.
         </div>
 
         <div class="pt-2 flex justify-end gap-2">
@@ -459,7 +590,7 @@
           <label class="block text-xs font-bold text-slate-700 mb-1">
             Isi Respon / Jawaban Resmi <span class="text-red-500">*</span>
           </label>
-          <textarea id="responIsi" rows="4" required placeholder="Tuliskan jawaban atau tindak lanjut dari pihak sekolah..."
+          <textarea id="responIsi" rows="4" required placeholder="Tuliskan jawaban atau tindak lanjut dari pihak madrasah..."
             class="w-full p-3 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"></textarea>
         </div>
 
@@ -509,7 +640,7 @@
   <!-- ================= FOOTER ================= -->
   <footer class="bg-white border-t border-slate-200 py-4 mt-8 text-center text-xs text-slate-500">
     <p class="font-bold text-slate-700">DUMAS (Pengaduan Masyarakat) — MTsN 3 Banyuwangi</p>
-    <p class="mt-0.5">Layanan Transparansi, Kritik, Saran & Pengaduan Masyarakat Terpadu</p>
+    <p class="mt-0.5">Semua data pengadu dirahasiakan dan menjadi milik madrasah.</p>
   </footer>
 
   <!-- ================= JAVASCRIPT LOGIC ================= -->
@@ -517,7 +648,7 @@
     // =========================================================================
     // PENTING: GANTI URL DI BAWAH INI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA
     // =========================================================================
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwqKzi7G6UIP1SJ1LDzsUIcBg1Mbc-xL3hnUUm7_70abdyqjDthncQtMwToyCQdCFZTag/exec";
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzSX7qhKEiP9uoQ2nYnFWd2r7S3KfHPx_vwgbpNh_mlotrxJBNCzJek3VtO5nLmm3H6zQ/exec";
 
     // ID File Google Drive Logo MTsN 3 Banyuwangi
     const LOGO_DRIVE_ID = "1d8oc7fFLvWhiCsny_ssG7-Mxet0_C20h";
@@ -531,6 +662,7 @@
     let useFrontCamera = true;
     let currentAdmin = null;
     let selectedComplaintForReply = null;
+    let kategoriChartInstance = null;
 
     // 1. Proteksi Anti Gambar Rusak untuk Logo Sekolah
     function handleLogoError(img) {
@@ -558,8 +690,24 @@
       return "https://ui-avatars.com/api/?name=" + encodeURIComponent(item.nama || "Pengadu") + "&background=065f46&color=fff";
     }
 
-    // 3. Navigasi Tab
+    // 3. Tampilkan Dropdown Semester Otomatis jika Status Pengadu = Murid
+    function handleStatusPengaduChange() {
+      const status = document.getElementById("inputStatusPengadu").value;
+      const containerSem = document.getElementById("containerSemester");
+      if (status === "Murid") {
+        containerSem.classList.remove("hidden");
+      } else {
+        containerSem.classList.add("hidden");
+      }
+    }
+
+    // 4. Navigasi Tab (Menu Rekap Hanya Bisa Diakses Jika Sudah Login)
     function switchTab(tab) {
+      if (tab === "rekap" && !currentAdmin) {
+        Swal.fire("Akses Terbatas", "Menu Rekap & Grafik Pengaduan hanya dapat diakses oleh Admin, Wakil Humas, dan Kepala Madrasah.", "warning");
+        return;
+      }
+
       const secForm = document.getElementById("sectionForm");
       const secRekap = document.getElementById("sectionRekap");
       const btnForm = document.getElementById("tabBtnForm");
@@ -569,18 +717,20 @@
         secForm.classList.remove("hidden");
         secRekap.classList.add("hidden");
         btnForm.className = "px-3 py-2 rounded-lg text-xs sm:text-sm font-bold bg-white text-emerald-800 shadow transition flex items-center gap-1.5";
-        btnRekap.className = "px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold text-white hover:bg-emerald-600/60 transition flex items-center gap-1.5";
+        if (currentAdmin) {
+          btnRekap.className = "flex px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold text-white hover:bg-emerald-600/60 transition items-center gap-1.5";
+        }
       } else {
         stopCamera();
         secForm.classList.add("hidden");
         secRekap.classList.remove("hidden");
-        btnRekap.className = "px-3 py-2 rounded-lg text-xs sm:text-sm font-bold bg-white text-emerald-800 shadow transition flex items-center gap-1.5";
+        btnRekap.className = "flex px-3 py-2 rounded-lg text-xs sm:text-sm font-bold bg-white text-emerald-800 shadow transition items-center gap-1.5";
         btnForm.className = "px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold text-white hover:bg-emerald-600/60 transition flex items-center gap-1.5";
         fetchRekapData();
       }
     }
 
-    // 4. Kamera Langsung (WebRTC) & Kompresi Gambar Otomatis
+    // 5. Kamera Langsung (WebRTC) Tanpa Galeri
     async function startCamera() {
       const container = document.getElementById("cameraContainer");
       const video = document.getElementById("cameraStream");
@@ -594,7 +744,7 @@
         container.classList.remove("hidden");
         document.getElementById("photoButtons").classList.add("hidden");
       } catch (err) {
-        Swal.fire("Kamera Tidak Tersedia", "Silakan gunakan tombol 'Kamera HP / Galeri' di sebelahnya.", "info");
+        Swal.fire("Izin Kamera Diperlukan", "Pastikan Anda mengizinkan akses kamera pada browser HP/Laptop Anda untuk mengambil foto.", "warning");
       }
     }
 
@@ -618,20 +768,6 @@
       const video = document.getElementById("cameraStream");
       processImageToBase64(video, video.videoWidth || 640, video.videoHeight || 480);
       stopCamera();
-    }
-
-    function handleFileSelect(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-          processImageToBase64(img, img.width, img.height);
-        };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
     }
 
     function processImageToBase64(sourceElement, width, height) {
@@ -659,17 +795,16 @@
     function resetPhoto() {
       capturedBase64Full = "";
       capturedBase64Thumb = "";
-      document.getElementById("fileInputPhoto").value = "";
       document.getElementById("photoPreviewContainer").classList.add("hidden");
       document.getElementById("photoButtons").classList.remove("hidden");
     }
 
-    // 5. Kirim Pengaduan Masyarakat
+    // 6. Kirim Pengaduan Masyarakat
     async function submitPengaduan(e) {
       e.preventDefault();
 
       if (!capturedBase64Full) {
-        Swal.fire("Foto Pengadu Wajib!", "Silakan ambil foto diri Anda terlebih dahulu sebelum mengirim pengaduan.", "warning");
+        Swal.fire("Foto Pengadu Wajib!", "Silakan klik 'Buka Kamera & Ambil Foto Pengadu' terlebih dahulu sebelum mengirim laporan.", "warning");
         return;
       }
 
@@ -678,16 +813,21 @@
         return;
       }
 
+      const statusPengadu = document.getElementById("inputStatusPengadu").value;
+      const semester = statusPengadu === "Murid" ? document.getElementById("inputSemester").value : "-";
+
       const btn = document.getElementById("btnSubmitAduan");
       const originalText = btn.innerHTML;
       btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim Pengaduan...';
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim Laporan...';
 
       const payload = {
         action: "submitAduan",
+        kategori: document.getElementById("inputKategori").value,
         nama: document.getElementById("inputNama").value,
         noWa: document.getElementById("inputWa").value,
-        kategori: document.getElementById("inputKategori").value,
+        statusPengadu: statusPengadu,
+        semester: semester,
         alamat: document.getElementById("inputAlamat").value,
         isiAduan: document.getElementById("inputIsi").value,
         fotoBase64: capturedBase64Full,
@@ -705,13 +845,16 @@
         if (result.status === "success") {
           Swal.fire({
             icon: "success",
-            title: "Pengaduan Terkirim!",
-            html: `Terima kasih. Pengaduan Anda dengan nomor <b>${result.idAduan}</b> telah diterima dan diteruskan ke WhatsApp Wakil Kepala Bidang Humas serta Kepala MTsN 3 Banyuwangi.`,
+            title: "Laporan Berhasil Terkirim!",
+            html: `Terima kasih. Laporan Anda dengan nomor <b>${result.idAduan}</b> telah diterima secara rahasia dan diteruskan ke WhatsApp Pimpinan MTsN 3 Banyuwangi.`,
             confirmButtonColor: "#047857"
           });
           document.getElementById("formPengaduan").reset();
+          handleStatusPengaduChange();
           resetPhoto();
-          switchTab("rekap");
+          if (currentAdmin) {
+            switchTab("rekap");
+          }
         } else {
           throw new Error(result.message || "Gagal mengirim pengaduan.");
         }
@@ -723,14 +866,16 @@
       }
     }
 
-    // 6. Ambil & Tampilkan Data Rekap Pengaduan
+    // 7. Ambil Data Rekap & Inisialisasi Grafik
     async function fetchRekapData() {
+      if (!currentAdmin) return;
+
       const tbody = document.getElementById("rekapTableBody");
       tbody.innerHTML = `
         <tr>
           <td colspan="6" class="py-10 text-center text-slate-500">
             <i class="fa-solid fa-spinner fa-spin text-2xl text-emerald-600 mb-2"></i>
-            <p>Mengambil data rekap pengaduan terbaru...</p>
+            <p>Mengambil data rekap & grafik pengaduan...</p>
           </td>
         </tr>`;
 
@@ -740,6 +885,8 @@
         if (result.status === "success") {
           allComplaintsData = result.data || [];
           updateStatistics();
+          populateYearFilterOptions();
+          updateChartData();
           renderRekapTable();
         }
       } catch (err) {
@@ -762,6 +909,129 @@
       document.getElementById("statSudah").innerText = sudah;
     }
 
+    // 8. Parsing Tanggal & Update Grafik (Pengaduan, Kritik, Saran, Apresiasi) dengan Filter Bulan & Tahun
+    function parseMonthYearFromTanggal(tanggalStr) {
+      if (!tanggalStr) return null;
+      const str = String(tanggalStr).trim();
+      // Format dd-MM-yyyy HH:mm:ss
+      const matchDMY = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+      if (matchDMY) {
+        return {
+          month: String(parseInt(matchDMY[2], 10)).padStart(2, "0"),
+          year: matchDMY[3]
+        };
+      }
+      const d = new Date(str);
+      if (!isNaN(d.getTime())) {
+        return {
+          month: String(d.getMonth() + 1).padStart(2, "0"),
+          year: String(d.getFullYear())
+        };
+      }
+      return null;
+    }
+
+    function populateYearFilterOptions() {
+      const yearSelect = document.getElementById("chartFilterYear");
+      const currentSelected = yearSelect.value || "ALL";
+      const yearsSet = new Set();
+      const currentYear = String(new Date().getFullYear());
+      yearsSet.add(currentYear);
+
+      allComplaintsData.forEach(item => {
+        const parsed = parseMonthYearFromTanggal(item.tanggal);
+        if (parsed && parsed.year) {
+          yearsSet.add(parsed.year);
+        }
+      });
+
+      const sortedYears = Array.from(yearsSet).sort((a, b) => b.localeCompare(a));
+      yearSelect.innerHTML = `<option value="ALL">Semua Tahun</option>` +
+        sortedYears.map(y => `<option value="${y}">${y}</option>`).join("");
+
+      if (sortedYears.includes(currentSelected) || currentSelected === "ALL") {
+        yearSelect.value = currentSelected;
+      }
+    }
+
+    function updateChartData() {
+      const selectedMonth = document.getElementById("chartFilterMonth").value;
+      const selectedYear = document.getElementById("chartFilterYear").value;
+
+      const counts = {
+        Pengaduan: 0,
+        Kritik: 0,
+        Saran: 0,
+        Apresiasi: 0
+      };
+
+      allComplaintsData.forEach(item => {
+        const parsed = parseMonthYearFromTanggal(item.tanggal);
+        const matchMonth = selectedMonth === "ALL" || (parsed && parsed.month === selectedMonth);
+        const matchYear = selectedYear === "ALL" || (parsed && parsed.year === selectedYear);
+
+        if (matchMonth && matchYear) {
+          const kat = String(item.kategori || "").toLowerCase();
+          if (kat.includes("pengaduan")) counts.Pengaduan++;
+          else if (kat.includes("kritik")) counts.Kritik++;
+          else if (kat.includes("saran")) counts.Saran++;
+          else if (kat.includes("apresiasi")) counts.Apresiasi++;
+        }
+      });
+
+      document.getElementById("countKatPengaduan").innerText = counts.Pengaduan;
+      document.getElementById("countKatKritik").innerText = counts.Kritik;
+      document.getElementById("countKatSaran").innerText = counts.Saran;
+      document.getElementById("countKatApresiasi").innerText = counts.Apresiasi;
+
+      const ctx = document.getElementById("kategoriChart").getContext("2d");
+      const dataValues = [counts.Pengaduan, counts.Kritik, counts.Saran, counts.Apresiasi];
+
+      if (kategoriChartInstance) {
+        kategoriChartInstance.data.datasets[0].data = dataValues;
+        kategoriChartInstance.update();
+      } else {
+        kategoriChartInstance = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: ["Pengaduan", "Kritik", "Saran", "Apresiasi"],
+            datasets: [{
+              label: "Jumlah Laporan",
+              data: dataValues,
+              backgroundColor: [
+                "rgba(225, 29, 72, 0.85)",   // Merah (Pengaduan)
+                "rgba(217, 119, 6, 0.85)",   // Amber (Kritik)
+                "rgba(37, 99, 235, 0.85)",   // Biru (Saran)
+                "rgba(5, 150, 105, 0.85)"    // Hijau (Apresiasi)
+              ],
+              borderColor: [
+                "rgb(225, 29, 72)",
+                "rgb(217, 119, 6)",
+                "rgb(37, 99, 235)",
+                "rgb(5, 150, 105)"
+              ],
+              borderWidth: 2,
+              borderRadius: 10
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: { stepSize: 1, precision: 0 }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    // 9. Render Tabel Rekap Pengaduan
     function setFilterStatus(status) {
       currentFilterStatus = status;
       document.getElementById("filterAll").className = status === "ALL"
@@ -777,15 +1047,10 @@
     }
 
     function renderRekapTable() {
+      if (!currentAdmin) return;
+
       const tbody = document.getElementById("rekapTableBody");
       const query = (document.getElementById("searchInput").value || "").toLowerCase();
-      const thAksi = document.getElementById("thAksiPimpinan");
-
-      if (currentAdmin) {
-        thAksi.classList.remove("hidden");
-      } else {
-        thAksi.classList.add("hidden");
-      }
 
       const filtered = allComplaintsData.filter(item => {
         const matchStatus = currentFilterStatus === "ALL" || item.status === currentFilterStatus;
@@ -793,6 +1058,8 @@
           item.nama.toLowerCase().includes(query) ||
           item.isiAduan.toLowerCase().includes(query) ||
           item.kategori.toLowerCase().includes(query) ||
+          (item.statusPengadu || "").toLowerCase().includes(query) ||
+          (item.alamat || "").toLowerCase().includes(query) ||
           item.idAduan.toLowerCase().includes(query);
         return matchStatus && matchSearch;
       });
@@ -801,7 +1068,7 @@
         tbody.innerHTML = `
           <tr>
             <td colspan="6" class="py-10 text-center text-slate-500 font-medium">
-              Tidak ada data pengaduan yang sesuai dengan filter.
+              Tidak ada data laporan yang sesuai dengan pencarian/filter.
             </td>
           </tr>`;
         return;
@@ -819,9 +1086,9 @@
              </span>`;
 
         const safePhotoSrc = getSafeImageSource(item);
-        const maskedWa = currentAdmin
-          ? item.noWa
-          : item.noWa.substring(0, 4) + "****" + item.noWa.substring(item.noWa.length - 3);
+        const statusPengaduText = item.statusPengadu === "Murid"
+          ? `Murid (Semester ${escapeHtml(item.semester)})`
+          : (item.statusPengadu || "-");
 
         const responHtml = isSudah
           ? `<div class="mt-2 p-2.5 rounded-lg bg-white/90 border border-emerald-300 text-xs">
@@ -830,15 +1097,6 @@
                <p class="text-[10px] text-slate-400 mt-1"><i class="fa-regular fa-clock"></i> Dijawab: ${escapeHtml(item.waktuRespon)}</p>
              </div>`
           : `<p class="text-xs text-red-700 font-semibold italic mt-1">Menunggu tanggapan pimpinan...</p>`;
-
-        const aksiColumn = currentAdmin
-          ? `<td class="py-3.5 px-4 text-center align-top">
-               <button onclick='openResponModal(${JSON.stringify(item).replace(/'/g, "&#39;")})'
-                 class="bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-2 rounded-xl text-xs font-bold shadow flex items-center justify-center gap-1.5 mx-auto whitespace-nowrap">
-                 <i class="fa-brands fa-whatsapp text-sm"></i> ${isSudah ? "Edit / Kirim WA Lagi" : "Respon & Balas WA"}
-               </button>
-             </td>`
-          : "";
 
         return `
           <tr class="${rowClass} transition">
@@ -849,7 +1107,10 @@
             </td>
             <td class="py-3.5 px-4 align-top">
               <p class="font-bold text-slate-900">${escapeHtml(item.nama)}</p>
-              <p class="text-xs text-slate-600 mt-0.5"><i class="fa-brands fa-whatsapp text-emerald-600"></i> ${escapeHtml(maskedWa)}</p>
+              <span class="inline-block bg-emerald-100 text-emerald-900 text-[10px] font-bold px-2 py-0.5 rounded mt-0.5">
+                <i class="fa-solid fa-id-badge"></i> ${escapeHtml(statusPengaduText)}
+              </span>
+              <p class="text-xs text-slate-700 font-semibold mt-1"><i class="fa-brands fa-whatsapp text-emerald-600"></i> ${escapeHtml(item.noWa)}</p>
               <p class="text-[11px] text-slate-500 mt-0.5"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(item.alamat)}</p>
             </td>
             <td class="py-3.5 px-4 align-top max-w-md">
@@ -873,13 +1134,18 @@
               ${badgeHtml}
               ${responHtml}
             </td>
-            ${aksiColumn}
+            <td class="py-3.5 px-4 text-center align-top">
+              <button onclick='openResponModal(${JSON.stringify(item).replace(/'/g, "&#39;")})'
+                class="bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-2 rounded-xl text-xs font-bold shadow flex items-center justify-center gap-1.5 mx-auto whitespace-nowrap">
+                <i class="fa-brands fa-whatsapp text-sm"></i> ${isSudah ? "Edit / Kirim WA Lagi" : "Respon & Balas WA"}
+              </button>
+            </td>
           </tr>
         `;
       }).join("");
     }
 
-    // 7. Login & Logout Pimpinan
+    // 10. Login & Logout (admin, humas, kepala)
     function handleAuthButtonClick() {
       if (currentAdmin) {
         switchTab("rekap");
@@ -914,9 +1180,11 @@
         if (result.status === "success") {
           currentAdmin = {
             role: result.role,
+            userKey: result.userKey,
             namaJabatan: result.namaJabatan
           };
           localStorage.setItem("dumas_admin_session", JSON.stringify(currentAdmin));
+          document.getElementById("loginPass").value = "";
           applyAdminUI();
           closeLoginModal();
           switchTab("rekap");
@@ -933,25 +1201,32 @@
     }
 
     function applyAdminUI() {
+      const btnRekap = document.getElementById("tabBtnRekap");
       if (currentAdmin) {
         document.getElementById("adminBanner").classList.remove("hidden");
-        document.getElementById("loggedRoleName").innerText = currentAdmin.namaJabatan;
-        document.getElementById("authBtnText").innerText = "Panel Pimpinan";
+        document.getElementById("loggedRoleName").innerText = `${currentAdmin.namaJabatan} (${currentAdmin.userKey})`;
+        document.getElementById("authBtnText").innerText = "Dashboard Rekap";
+        // Munculkan tombol menu Rekap Pengaduan
+        btnRekap.classList.remove("hidden");
+        btnRekap.classList.add("flex");
       } else {
         document.getElementById("adminBanner").classList.add("hidden");
         document.getElementById("authBtnText").innerText = "Login Pimpinan";
+        // Sembunyikan tombol menu Rekap Pengaduan dari publik
+        btnRekap.classList.add("hidden");
+        btnRekap.classList.remove("flex");
+        switchTab("form");
       }
-      renderRekapTable();
     }
 
     function logoutAdmin() {
       currentAdmin = null;
       localStorage.removeItem("dumas_admin_session");
       applyAdminUI();
-      Swal.fire("Berhasil Keluar", "Anda telah keluar dari mode pimpinan.", "info");
+      Swal.fire("Berhasil Keluar", "Anda telah keluar dari sesi pengelola/pimpinan.", "info");
     }
 
-    // 8. Menu Khusus Admin: Ubah Token Fonnte, No HP Waka Humas & No HP Kepala Sekolah
+    // 11. Menu Pengaturan Admin (Token Fonnte, No HP, & Password)
     async function openSettingsModal() {
       document.getElementById("modalSettings").classList.remove("hidden");
       document.getElementById("modalSettings").classList.add("flex");
@@ -963,6 +1238,9 @@
           document.getElementById("settingTokenFonnte").value = result.data.fonnteToken || "";
           document.getElementById("settingWaHumas").value = result.data.waHumas || "";
           document.getElementById("settingWaKepsek").value = result.data.waKepsek || "";
+          document.getElementById("settingPassAdmin").value = result.data.passAdmin || "";
+          document.getElementById("settingPassHumas").value = result.data.passHumas || "";
+          document.getElementById("settingPassKepala").value = result.data.passKepala || "";
         }
       } catch (err) {
         console.error("Gagal memuat pengaturan:", err);
@@ -985,7 +1263,10 @@
         action: "saveSettings",
         fonnteToken: document.getElementById("settingTokenFonnte").value,
         waHumas: document.getElementById("settingWaHumas").value,
-        waKepsek: document.getElementById("settingWaKepsek").value
+        waKepsek: document.getElementById("settingWaKepsek").value,
+        passAdmin: document.getElementById("settingPassAdmin").value,
+        passHumas: document.getElementById("settingPassHumas").value,
+        passKepala: document.getElementById("settingPassKepala").value
       };
 
       try {
@@ -1009,16 +1290,21 @@
       }
     }
 
-    // 9. Respon Pimpinan & Kirim Balasan WA Secara Mandiri (Tanpa Fonnte)
+    // 12. Respon Pimpinan & Kirim Balasan WA Secara Mandiri (Tanpa Fonnte)
     function openResponModal(item) {
       selectedComplaintForReply = item;
       document.getElementById("responIdAduan").value = item.idAduan;
       document.getElementById("responPejabat").value = currentAdmin ? currentAdmin.namaJabatan : "Pimpinan MTsN 3 Banyuwangi";
       document.getElementById("responIsi").value = item.respon || "";
 
+      const statusInfo = item.statusPengadu === "Murid"
+        ? `Murid (Semester ${escapeHtml(item.semester)})`
+        : escapeHtml(item.statusPengadu || "-");
+
       document.getElementById("detailAduanModal").innerHTML = `
-        <p><strong>ID Aduan:</strong> ${escapeHtml(item.idAduan)} (${escapeHtml(item.tanggal)})</p>
-        <p><strong>Pengadu:</strong> ${escapeHtml(item.nama)} — <span class="text-emerald-700 font-bold">${escapeHtml(item.noWa)}</span></p>
+        <p><strong>ID Laporan:</strong> ${escapeHtml(item.idAduan)} (${escapeHtml(item.tanggal)})</p>
+        <p><strong>Pengadu:</strong> ${escapeHtml(item.nama)} (${statusInfo}) — <span class="text-emerald-700 font-bold">${escapeHtml(item.noWa)}</span></p>
+        <p><strong>Alamat:</strong> ${escapeHtml(item.alamat)}</p>
         <p><strong>Isi ${escapeHtml(item.kategori)}:</strong> "${escapeHtml(item.isiAduan)}"</p>
       `;
 
@@ -1059,14 +1345,13 @@
           closeResponModal();
           await fetchRekapData();
 
-          // Konversi awalan 0 ke 62 HANYA saat membuka link wa.me (di Sheet tetap tersimpan 08xx)
           let targetPhone = String(selectedComplaintForReply.noWa).replace(/[^0-9]/g, "");
           if (targetPhone.startsWith("0")) targetPhone = "62" + targetPhone.substring(1);
 
           const waText =
             `Assalamu'alaikum Wr. Wb.\n` +
-            `Yth. Bapak/Ibu *${selectedComplaintForReply.nama}*,\n\n` +
-            `Terima kasih atas ${selectedComplaintForReply.kategori} yang telah Anda sampaikan melalui layanan *DUMAS MTsN 3 Banyuwangi* (ID: *${idAduan}*).\n\n` +
+            `Yth. Bapak/Ibu/Ananda *${selectedComplaintForReply.nama}*,\n\n` +
+            `Terima kasih atas *${selectedComplaintForReply.kategori}* yang telah Anda sampaikan melalui layanan *DUMAS MTsN 3 Banyuwangi* (ID: *${idAduan}*).\n\n` +
             `*Isi Laporan Anda:*\n"${selectedComplaintForReply.isiAduan}"\n\n` +
             `*Tanggapan / Jawaban Resmi (${dijawabOleh}):*\n${isiRespon}\n\n` +
             `Demikian tanggapan ini kami sampaikan. Terima kasih atas kepedulian dan kerja sama Anda untuk kemajuan MTsN 3 Banyuwangi.\n` +
@@ -1085,7 +1370,7 @@
       }
     }
 
-    // 10. Modal Preview Foto & QR Code
+    // 13. Modal Preview Foto & QR Code
     function openPhotoModal(src, nama) {
       document.getElementById("modalPhotoImg").src = src;
       document.getElementById("modalPhotoCaption").innerText = "Foto Pengadu: " + nama;
