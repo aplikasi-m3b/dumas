@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DUMAS (Pengaduan Masyarakat) - MTsN 3 Banyuwangi</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #f1f5f9;
+    }
+    .row-belum {
+      background-color: #fef2f2 !important;
+      border-left: 5px solid #dc2626 !important;
+    }
+    .row-sudah {
+      background-color: #f0fdf4 !important;
+      border-left: 5px solid #16a34a !important;
+    }
+    .row-belum:hover {
+      background-color: #fee2e2 !important;
+    }
+    .row-sudah:hover {
+      background-color: #dcfce7 !important;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col text-slate-800">
+
+  <!-- ================= HEADER / NAVBAR ================= -->
+  <header class="bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800 text-white shadow-lg sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <!-- Logo & Identitas Sekolah -->
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 sm:w-14 sm:h-14 bg-white rounded-full p-1.5 shadow-md flex items-center justify-center overflow-hidden shrink-0">
+          <img
+            id="schoolLogo"
+            src="https://lh3.googleusercontent.com/d/1d8oc7fFLvWhiCsny_ssG7-Mxet0_C20h=w500"
+            referrerpolicy="no-referrer"
+            alt="Logo MTsN 3 Banyuwangi"
+            class="w-full h-full object-contain"
+            onerror="handleLogoError(this)"
+          />
+        </div>
+        <div>
+          <span class="bg-amber-400 text-emerald-950 text-[10px] sm:text-xs font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+            Layanan Resmi Terpadu
+          </span>
+          <h1 class="text-lg sm:text-xl font-extrabold tracking-tight leading-tight mt-0.5">
+            DUMAS (Pengaduan Masyarakat)
+          </h1>
+          <p class="text-xs sm:text-sm text-emerald-100 font-medium">
+            MTsN 3 Banyuwangi
+          </p>
+        </div>
+      </div>
+
+      <!-- Navigasi Menu -->
+      <nav class="flex flex-wrap items-center gap-1.5 sm:gap-2 w-full sm:w-auto justify-end border-t border-emerald-600/50 sm:border-none pt-2 sm:pt-0">
+        <button onclick="switchTab('form')" id="tabBtnForm" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-bold bg-white text-emerald-800 shadow transition flex items-center gap-1.5">
+          <i class="fa-solid fa-paper-plane"></i> Buat Pengaduan
+        </button>
+        <button onclick="switchTab('rekap')" id="tabBtnRekap" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold text-white hover:bg-emerald-600/60 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-table-list"></i> Rekap Pengaduan
+        </button>
+        <button onclick="showQrModal()" class="px-2.5 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-emerald-900/50 hover:bg-emerald-900 text-amber-300 transition flex items-center gap-1" title="Tampilkan Barcode/QR Aplikasi">
+          <i class="fa-solid fa-qrcode text-base"></i> <span class="hidden md:inline">QR Code</span>
+        </button>
+        <button onclick="handleAuthButtonClick()" id="tabBtnAdmin" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-amber-400 hover:bg-amber-300 text-emerald-950 transition flex items-center gap-1.5 shadow">
+          <i class="fa-solid fa-user-shield"></i> <span id="authBtnText">Login Pimpinan</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ================= BANNER STATUS LOGIN PIMPINAN & MENU PENGATURAN ================= -->
+  <div id="adminBanner" class="hidden bg-amber-50 border-b border-amber-300 px-4 py-2.5 shadow-xs">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm">
+      <div class="flex items-center gap-2 text-amber-900 font-semibold">
+        <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+        <span>Login Sebagai: <strong id="loggedRoleName" class="underline"></strong></span>
+      </div>
+      <div class="flex items-center gap-2">
+        <!-- Tombol Menu Khusus Admin untuk Ganti Token Fonnte & No HP Pimpinan -->
+        <button onclick="openSettingsModal()" class="bg-blue-700 hover:bg-blue-800 text-white px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 shadow-xs transition">
+          <i class="fa-solid fa-sliders"></i> Pengaturan WA & Fonnte
+        </button>
+        <button onclick="logoutAdmin()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1 shadow-xs transition">
+          <i class="fa-solid fa-right-from-bracket"></i> Keluar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= KONTEN UTAMA ================= -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-6">
+
+    <!-- ==================== TAB 1: FORM PENGADUAN MASYARAKAT ==================== -->
+    <section id="sectionForm" class="max-w-2xl mx-auto">
+      <div class="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
+        <div class="bg-emerald-50 border-b border-emerald-100 p-4 sm:p-6 flex items-start gap-4">
+          <div class="bg-emerald-600 text-white w-11 h-11 rounded-xl flex items-center justify-center shrink-0 text-lg shadow">
+            <i class="fa-solid fa-comments"></i>
+          </div>
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-slate-800">Formulir Aspirasi & Pengaduan Masyarakat</h2>
+            <p class="text-xs sm:text-sm text-slate-600 mt-0.5">
+              Sampaikan kritik, saran, atau pengaduan Anda secara santun dan jelas. Data Anda akan langsung diterima oleh Wakil Kepala Bidang Humas dan Kepala MTsN 3 Banyuwangi.
+            </p>
+          </div>
+        </div>
+
+        <form id="formPengaduan" onsubmit="submitPengaduan(event)" class="p-5 sm:p-6 space-y-4">
+          <!-- Nama Lengkap -->
+          <div>
+            <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1">
+              Nama Lengkap Pengadu <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <i class="fa-solid fa-user absolute left-3.5 top-3 text-slate-400"></i>
+              <input type="text" id="inputNama" required placeholder="Masukkan nama lengkap Anda"
+                class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm" />
+            </div>
+          </div>
+
+          <!-- Grid No WA & Kategori -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1">
+                Nomor WhatsApp Aktif <span class="text-red-500">*</span>
+              </label>
+              <div class="relative">
+                <i class="fa-brands fa-whatsapp absolute left-3.5 top-3 text-emerald-600 font-bold"></i>
+                <input type="tel" id="inputWa" required placeholder="Contoh: 081234567890"
+                  class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm" />
+              </div>
+              <p class="text-[11px] text-slate-500 mt-1">Gunakan awalan 08xx (angka 0 otomatis tersimpan utuh).</p>
+            </div>
+
+            <div>
+              <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1">
+                Kategori Laporan <span class="text-red-500">*</span>
+              </label>
+              <div class="relative">
+                <i class="fa-solid fa-tag absolute left-3.5 top-3 text-slate-400"></i>
+                <select id="inputKategori" required
+                  class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm bg-white">
+                  <option value="Pengaduan">Pengaduan</option>
+                  <option value="Saran">Saran</option>
+                  <option value="Kritik">Kritik</option>
+                  <option value="Apresiasi / Pertanyaan">Apresiasi / Pertanyaan</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Alamat / Hubungan dengan Sekolah -->
+          <div>
+            <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1">
+              Alamat / Status Pengadu (Wali Murid / Masyarakat Umum / Alumni) <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <i class="fa-solid fa-location-dot absolute left-3.5 top-3 text-slate-400"></i>
+              <input type="text" id="inputAlamat" required placeholder="Contoh: Wali Murid Kelas 8A / Warga Srono"
+                class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm" />
+            </div>
+          </div>
+
+          <!-- Isi Pengaduan -->
+          <div>
+            <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1">
+              Isi Kritik / Saran / Pengaduan <span class="text-red-500">*</span>
+            </label>
+            <textarea id="inputIsi" rows="4" required placeholder="Tuliskan detail kritik, saran, atau pengaduan Anda secara jelas..."
+              class="w-full p-3.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"></textarea>
+          </div>
+
+          <!-- Ambil Foto Pengadu -->
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-2">
+              Ambil Foto Pengadu <span class="text-red-500">*</span>
+            </label>
+
+            <!-- Area Kamera Live -->
+            <div id="cameraContainer" class="hidden mb-3">
+              <div class="relative rounded-xl overflow-hidden bg-black aspect-video max-w-sm mx-auto border-2 border-emerald-500">
+                <video id="cameraStream" autoplay playsinline class="w-full h-full object-cover"></video>
+              </div>
+              <div class="flex justify-center gap-2 mt-2.5">
+                <button type="button" onclick="takeSnapshot()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow">
+                  <i class="fa-solid fa-camera"></i> Jepret Foto
+                </button>
+                <button type="button" onclick="switchCameraFacing()" class="bg-slate-700 hover:bg-slate-800 text-white px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1">
+                  <i class="fa-solid fa-repeat"></i> Putar Kamera
+                </button>
+                <button type="button" onclick="stopCamera()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-xs font-semibold">
+                  Batal
+                </button>
+              </div>
+            </div>
+
+            <!-- Preview Hasil Foto -->
+            <div id="photoPreviewContainer" class="hidden mb-3 text-center">
+              <img id="photoPreview" src="" alt="Preview Foto Pengadu" class="w-44 h-44 object-cover rounded-xl mx-auto border-2 border-emerald-500 shadow" />
+              <button type="button" onclick="resetPhoto()" class="mt-2 text-xs text-red-600 hover:underline font-bold flex items-center gap-1 mx-auto">
+                <i class="fa-solid fa-trash"></i> Hapus & Ambil Ulang Foto
+              </button>
+            </div>
+
+            <!-- Tombol Pilihan Ambil Foto -->
+            <div id="photoButtons" class="flex flex-wrap gap-2">
+              <button type="button" onclick="startCamera()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-sm transition">
+                <i class="fa-solid fa-camera-retro"></i> Buka Kamera Langsung
+              </button>
+              <label class="flex-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 cursor-pointer transition">
+                <i class="fa-solid fa-image text-emerald-600"></i> Kamera HP / Galeri
+                <input type="file" id="fileInputPhoto" accept="image/*" capture="user" onchange="handleFileSelect(event)" class="hidden" />
+              </label>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-2">
+              <i class="fa-solid fa-circle-info text-emerald-600"></i> Wajib menyertakan foto diri pengadu sebagai verifikasi keaslian laporan.
+            </p>
+          </div>
+
+          <!-- Tombol Submit -->
+          <button type="submit" id="btnSubmitAduan" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold py-3.5 px-6 rounded-xl shadow-lg hover:shadow-xl transition flex items-center justify-center gap-2 text-sm sm:text-base">
+            <i class="fa-solid fa-paper-plane"></i> KIRIM PENGADUAN SEKARANG
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 2: REKAP & RESPON PENGADUAN ==================== -->
+    <section id="sectionRekap" class="hidden space-y-5">
+      <!-- Ringkasan Statistik -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-xl font-bold">
+            <i class="fa-solid fa-folder-open"></i>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500 font-semibold uppercase">Total Pengaduan</p>
+            <p id="statTotal" class="text-2xl font-extrabold text-slate-800">0</p>
+          </div>
+        </div>
+
+        <div class="bg-red-50 p-4 rounded-2xl shadow-sm border border-red-200 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-red-600 text-white flex items-center justify-center text-xl font-bold">
+            <i class="fa-solid fa-clock"></i>
+          </div>
+          <div>
+            <p class="text-xs text-red-700 font-bold uppercase">Belum Direspon (Merah)</p>
+            <p id="statBelum" class="text-2xl font-extrabold text-red-700">0</p>
+          </div>
+        </div>
+
+        <div class="bg-emerald-50 p-4 rounded-2xl shadow-sm border border-emerald-200 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-xl font-bold">
+            <i class="fa-solid fa-check-double"></i>
+          </div>
+          <div>
+            <p class="text-xs text-emerald-800 font-bold uppercase">Sudah Direspon (Hijau)</p>
+            <p id="statSudah" class="text-2xl font-extrabold text-emerald-700">0</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter & Pencarian -->
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-xs font-bold text-slate-600 mr-1"><i class="fa-solid fa-filter"></i> Filter Status:</span>
+          <button onclick="setFilterStatus('ALL')" id="filterAll" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-white">
+            Semua
+          </button>
+          <button onclick="setFilterStatus('Belum Direspon')" id="filterBelum" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-100 text-red-700 hover:bg-red-200">
+            🔴 Belum Direspon
+          </button>
+          <button onclick="setFilterStatus('Sudah Direspon')" id="filterSudah" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-800 hover:bg-emerald-200">
+            🟢 Sudah Direspon
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <div class="relative flex-grow sm:w-64">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+            <input type="text" id="searchInput" oninput="renderRekapTable()" placeholder="Cari nama, kategori, isi aduan..."
+              class="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-emerald-500 outline-none" />
+          </div>
+          <button onclick="fetchRekapData()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 shrink-0">
+            <i class="fa-solid fa-rotate"></i> Segarkan
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabel Rekap Pengaduan -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-800 text-white text-xs uppercase tracking-wider">
+                <th class="py-3.5 px-4">No & Tanggal</th>
+                <th class="py-3.5 px-4">Data Pengadu</th>
+                <th class="py-3.5 px-4">Kategori & Isi Aduan</th>
+                <th class="py-3.5 px-4 text-center">Foto Pengadu</th>
+                <th class="py-3.5 px-4">Status & Respon Pimpinan</th>
+                <th id="thAksiPimpinan" class="py-3.5 px-4 text-center hidden">Aksi Pimpinan</th>
+              </tr>
+            </thead>
+            <tbody id="rekapTableBody" class="divide-y divide-slate-200 text-xs sm:text-sm">
+              <tr>
+                <td colspan="6" class="py-10 text-center text-slate-500">
+                  <i class="fa-solid fa-spinner fa-spin text-2xl text-emerald-600 mb-2"></i>
+                  <p>Memuat data rekap pengaduan...</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= MODAL LOGIN PIMPINAN ================= -->
+  <div id="modalLogin" class="fixed inset-0 bg-black/60 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+        <h3 class="text-base font-extrabold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-user-lock text-emerald-700"></i> Login Pimpinan Sekolah
+        </h3>
+        <button onclick="closeLoginModal()" class="text-slate-400 hover:text-slate-600 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <p class="text-xs text-slate-500 mt-2">
+        Khusus Wakil Kepala Bagian Humas & Kepala MTsN 3 Banyuwangi untuk merespon pengaduan dan mengelola pengaturan WA.
+      </p>
+      <form onsubmit="submitLogin(event)" class="mt-4 space-y-3.5">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Username</label>
+          <input type="text" id="loginUser" required placeholder="Masukkan username"
+            class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Password</label>
+          <input type="password" id="loginPass" required placeholder="Masukkan password"
+            class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" />
+        </div>
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeLoginModal()" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700">
+            Batal
+          </button>
+          <button type="submit" id="btnLoginSubmit" class="px-5 py-2 rounded-xl text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white shadow">
+            Masuk
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL KHUSUS ADMIN: PENGATURAN TOKEN FONNTE & NO HP PIMPINAN ================= -->
+  <div id="modalSettings" class="fixed inset-0 bg-black/60 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+        <h3 class="text-base font-extrabold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-blue-700"></i> Pengaturan WA & Token Fonnte
+        </h3>
+        <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <p class="text-xs text-slate-500 mt-2">
+        Ubah Token Fonnte serta nomor WhatsApp penerima notifikasi pengaduan baru. Nomor yang diawali angka <strong>0</strong> akan tersimpan utuh di Google Sheet.
+      </p>
+
+      <form onsubmit="submitSaveSettings(event)" class="mt-4 space-y-3.5">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">
+            Token Fonnte <span class="text-red-500">*</span>
+          </label>
+          <div class="relative">
+            <i class="fa-solid fa-key absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+            <input type="text" id="settingTokenFonnte" required placeholder="Masukkan Token Fonnte"
+              class="w-full pl-9 pr-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none font-mono" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">
+            No. HP / WA Wakil Kepala Bagian Humas <span class="text-red-500">*</span>
+          </label>
+          <div class="relative">
+            <i class="fa-brands fa-whatsapp absolute left-3.5 top-2.5 text-emerald-600 font-bold"></i>
+            <input type="tel" id="settingWaHumas" required placeholder="Contoh: 081234567890"
+              class="w-full pl-9 pr-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">
+            No. HP / WA Kepala Sekolah <span class="text-red-500">*</span>
+          </label>
+          <div class="relative">
+            <i class="fa-brands fa-whatsapp absolute left-3.5 top-2.5 text-emerald-600 font-bold"></i>
+            <input type="tel" id="settingWaKepsek" required placeholder="Contoh: 081298765432"
+              class="w-full pl-9 pr-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+          </div>
+        </div>
+
+        <div class="bg-blue-50 border border-blue-200 p-2.5 rounded-xl text-[11px] text-blue-900">
+          <i class="fa-solid fa-shield-halved text-blue-700"></i>
+          <strong>Format Teks Otomatis:</strong> Angka <strong>0</strong> di depan nomor HP dijamin tidak akan hilang saat tersimpan di Google Sheet.
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeSettingsModal()" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700">
+            Batal
+          </button>
+          <button type="submit" id="btnSaveSettings" class="px-5 py-2 rounded-xl text-xs font-bold bg-blue-700 hover:bg-blue-800 text-white shadow flex items-center gap-1.5">
+            <i class="fa-solid fa-floppy-disk"></i> Simpan Pengaturan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL RESPON & KIRIM WA MANDIRI ================= -->
+  <div id="modalRespon" class="fixed inset-0 bg-black/60 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+        <h3 class="text-base font-extrabold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-reply-all text-emerald-700"></i> Respon Pengaduan & Balas WA
+        </h3>
+        <button onclick="closeResponModal()" class="text-slate-400 hover:text-slate-600 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div id="detailAduanModal" class="mt-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs space-y-1"></div>
+
+      <form onsubmit="submitResponPimpinan(event)" class="mt-4 space-y-3.5">
+        <input type="hidden" id="responIdAduan" />
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Penjawab / Pejabat</label>
+          <input type="text" id="responPejabat" required
+            class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm bg-slate-100 font-semibold" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">
+            Isi Respon / Jawaban Resmi <span class="text-red-500">*</span>
+          </label>
+          <textarea id="responIsi" rows="4" required placeholder="Tuliskan jawaban atau tindak lanjut dari pihak sekolah..."
+            class="w-full p-3 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"></textarea>
+        </div>
+
+        <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-xl text-[11px] text-emerald-900">
+          <i class="fa-brands fa-whatsapp text-emerald-600 font-bold"></i>
+          <strong>Kirim WA Mandiri:</strong> Jawaban akan disimpan ke Rekap (berubah menjadi <strong>Hijau</strong>) dan otomatis membuka WhatsApp pribadi Anda untuk mengirim balasan langsung ke nomor WA Pengadu (tanpa menggunakan Fonnte).
+        </div>
+
+        <div class="pt-2 flex flex-wrap justify-end gap-2">
+          <button type="button" onclick="closeResponModal()" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700">
+            Tutup
+          </button>
+          <button type="submit" id="btnSubmitRespon" class="px-5 py-2.5 rounded-xl text-xs font-extrabold bg-emerald-600 hover:bg-emerald-700 text-white shadow flex items-center gap-1.5">
+            <i class="fa-brands fa-whatsapp text-base"></i> Simpan Respon & Kirim WA ke Pengadu
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL PREVIEW FOTO BESAR ================= -->
+  <div id="modalPhoto" onclick="closePhotoModal()" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
+    <div class="max-w-lg w-full bg-white p-3 rounded-2xl shadow-2xl text-center" onclick="event.stopPropagation()">
+      <img id="modalPhotoImg" src="" alt="Foto Pengadu" referrerpolicy="no-referrer" class="w-full max-h-[75vh] object-contain rounded-xl mx-auto" />
+      <p id="modalPhotoCaption" class="text-xs font-bold text-slate-700 mt-2"></p>
+      <button onclick="closePhotoModal()" class="mt-3 px-4 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-bold">
+        Tutup Foto
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= MODAL QR CODE / BARCODE LINK GITHUB ================= -->
+  <div id="modalQr" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl">
+      <h3 class="text-base font-extrabold text-slate-800">Scan QR Code DUMAS</h3>
+      <p class="text-xs text-slate-500 mb-4">MTsN 3 Banyuwangi</p>
+      <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 inline-block">
+        <img id="qrImage" src="" alt="QR Code Aplikasi" class="w-48 h-48 mx-auto" />
+      </div>
+      <p id="qrUrlText" class="text-[11px] text-slate-500 break-all mt-3"></p>
+      <button onclick="document.getElementById('modalQr').classList.add('hidden')" class="mt-4 w-full py-2 bg-emerald-700 text-white rounded-xl text-xs font-bold">
+        Tutup
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="bg-white border-t border-slate-200 py-4 mt-8 text-center text-xs text-slate-500">
+    <p class="font-bold text-slate-700">DUMAS (Pengaduan Masyarakat) — MTsN 3 Banyuwangi</p>
+    <p class="mt-0.5">Layanan Transparansi, Kritik, Saran & Pengaduan Masyarakat Terpadu</p>
+  </footer>
+
+  <!-- ================= JAVASCRIPT LOGIC ================= -->
+  <script>
+    // =========================================================================
+    // PENTING: GANTI URL DI BAWAH INI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA
+    // =========================================================================
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwqKzi7G6UIP1SJ1LDzsUIcBg1Mbc-xL3hnUUm7_70abdyqjDthncQtMwToyCQdCFZTag/exec";
+
+    // ID File Google Drive Logo MTsN 3 Banyuwangi
+    const LOGO_DRIVE_ID = "1d8oc7fFLvWhiCsny_ssG7-Mxet0_C20h";
+
+    // State Aplikasi
+    let allComplaintsData = [];
+    let currentFilterStatus = "ALL";
+    let capturedBase64Full = "";
+    let capturedBase64Thumb = "";
+    let videoStream = null;
+    let useFrontCamera = true;
+    let currentAdmin = null;
+    let selectedComplaintForReply = null;
+
+    // 1. Proteksi Anti Gambar Rusak untuk Logo Sekolah
+    function handleLogoError(img) {
+      if (!img.dataset.fallback1) {
+        img.dataset.fallback1 = "true";
+        img.src = "https://drive.google.com/thumbnail?id=" + LOGO_DRIVE_ID + "&sz=w500";
+      } else if (!img.dataset.fallback2) {
+        img.dataset.fallback2 = "true";
+        img.src = "https://drive.google.com/uc?export=view&id=" + LOGO_DRIVE_ID;
+      }
+    }
+
+    // 2. Helper Konversi URL Gambar Drive agar TIDAK PERNAH RUSAK
+    function getSafeImageSource(item) {
+      if (item.fotoThumb && item.fotoThumb.startsWith("data:image")) {
+        return item.fotoThumb;
+      }
+      if (item.urlFoto) {
+        const match = item.urlFoto.match(/[-\w]{25,}/);
+        if (match && match[0]) {
+          return "https://lh3.googleusercontent.com/d/" + match[0] + "=w600";
+        }
+        return item.urlFoto;
+      }
+      return "https://ui-avatars.com/api/?name=" + encodeURIComponent(item.nama || "Pengadu") + "&background=065f46&color=fff";
+    }
+
+    // 3. Navigasi Tab
+    function switchTab(tab) {
+      const secForm = document.getElementById("sectionForm");
+      const secRekap = document.getElementById("sectionRekap");
+      const btnForm = document.getElementById("tabBtnForm");
+      const btnRekap = document.getElementById("tabBtnRekap");
+
+      if (tab === "form") {
+        secForm.classList.remove("hidden");
+        secRekap.classList.add("hidden");
+        btnForm.className = "px-3 py-2 rounded-lg text-xs sm:text-sm font-bold bg-white text-emerald-800 shadow transition flex items-center gap-1.5";
+        btnRekap.className = "px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold text-white hover:bg-emerald-600/60 transition flex items-center gap-1.5";
+      } else {
+        stopCamera();
+        secForm.classList.add("hidden");
+        secRekap.classList.remove("hidden");
+        btnRekap.className = "px-3 py-2 rounded-lg text-xs sm:text-sm font-bold bg-white text-emerald-800 shadow transition flex items-center gap-1.5";
+        btnForm.className = "px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold text-white hover:bg-emerald-600/60 transition flex items-center gap-1.5";
+        fetchRekapData();
+      }
+    }
+
+    // 4. Kamera Langsung (WebRTC) & Kompresi Gambar Otomatis
+    async function startCamera() {
+      const container = document.getElementById("cameraContainer");
+      const video = document.getElementById("cameraStream");
+      try {
+        if (videoStream) stopCamera();
+        videoStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: useFrontCamera ? "user" : "environment" },
+          audio: false
+        });
+        video.srcObject = videoStream;
+        container.classList.remove("hidden");
+        document.getElementById("photoButtons").classList.add("hidden");
+      } catch (err) {
+        Swal.fire("Kamera Tidak Tersedia", "Silakan gunakan tombol 'Kamera HP / Galeri' di sebelahnya.", "info");
+      }
+    }
+
+    function switchCameraFacing() {
+      useFrontCamera = !useFrontCamera;
+      startCamera();
+    }
+
+    function stopCamera() {
+      if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
+        videoStream = null;
+      }
+      document.getElementById("cameraContainer").classList.add("hidden");
+      if (!capturedBase64Full) {
+        document.getElementById("photoButtons").classList.remove("hidden");
+      }
+    }
+
+    function takeSnapshot() {
+      const video = document.getElementById("cameraStream");
+      processImageToBase64(video, video.videoWidth || 640, video.videoHeight || 480);
+      stopCamera();
+    }
+
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          processImageToBase64(img, img.width, img.height);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function processImageToBase64(sourceElement, width, height) {
+      const canvasFull = document.createElement("canvas");
+      const maxFull = 640;
+      const scaleFull = Math.min(maxFull / width, maxFull / height, 1);
+      canvasFull.width = width * scaleFull;
+      canvasFull.height = height * scaleFull;
+      canvasFull.getContext("2d").drawImage(sourceElement, 0, 0, canvasFull.width, canvasFull.height);
+      capturedBase64Full = canvasFull.toDataURL("image/jpeg", 0.75);
+
+      const canvasThumb = document.createElement("canvas");
+      const maxThumb = 220;
+      const scaleThumb = Math.min(maxThumb / width, maxThumb / height, 1);
+      canvasThumb.width = width * scaleThumb;
+      canvasThumb.height = height * scaleThumb;
+      canvasThumb.getContext("2d").drawImage(sourceElement, 0, 0, canvasThumb.width, canvasThumb.height);
+      capturedBase64Thumb = canvasThumb.toDataURL("image/jpeg", 0.65);
+
+      document.getElementById("photoPreview").src = capturedBase64Full;
+      document.getElementById("photoPreviewContainer").classList.remove("hidden");
+      document.getElementById("photoButtons").classList.add("hidden");
+    }
+
+    function resetPhoto() {
+      capturedBase64Full = "";
+      capturedBase64Thumb = "";
+      document.getElementById("fileInputPhoto").value = "";
+      document.getElementById("photoPreviewContainer").classList.add("hidden");
+      document.getElementById("photoButtons").classList.remove("hidden");
+    }
+
+    // 5. Kirim Pengaduan Masyarakat
+    async function submitPengaduan(e) {
+      e.preventDefault();
+
+      if (!capturedBase64Full) {
+        Swal.fire("Foto Pengadu Wajib!", "Silakan ambil foto diri Anda terlebih dahulu sebelum mengirim pengaduan.", "warning");
+        return;
+      }
+
+      if (!GAS_WEB_APP_URL || GAS_WEB_APP_URL.includes("TEMPEL_URL")) {
+        Swal.fire("URL Backend Belum Diisi", "Silakan masukkan URL Web App Google Apps Script pada variabel GAS_WEB_APP_URL di file index.html.", "error");
+        return;
+      }
+
+      const btn = document.getElementById("btnSubmitAduan");
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim Pengaduan...';
+
+      const payload = {
+        action: "submitAduan",
+        nama: document.getElementById("inputNama").value,
+        noWa: document.getElementById("inputWa").value,
+        kategori: document.getElementById("inputKategori").value,
+        alamat: document.getElementById("inputAlamat").value,
+        isiAduan: document.getElementById("inputIsi").value,
+        fotoBase64: capturedBase64Full,
+        fotoThumb: capturedBase64Thumb,
+        appUrl: window.location.href
+      };
+
+      try {
+        const res = await fetch(GAS_WEB_APP_URL, {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+
+        if (result.status === "success") {
+          Swal.fire({
+            icon: "success",
+            title: "Pengaduan Terkirim!",
+            html: `Terima kasih. Pengaduan Anda dengan nomor <b>${result.idAduan}</b> telah diterima dan diteruskan ke WhatsApp Wakil Kepala Bidang Humas serta Kepala MTsN 3 Banyuwangi.`,
+            confirmButtonColor: "#047857"
+          });
+          document.getElementById("formPengaduan").reset();
+          resetPhoto();
+          switchTab("rekap");
+        } else {
+          throw new Error(result.message || "Gagal mengirim pengaduan.");
+        }
+      } catch (err) {
+        Swal.fire("Terjadi Kesalahan", err.message, "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    // 6. Ambil & Tampilkan Data Rekap Pengaduan
+    async function fetchRekapData() {
+      const tbody = document.getElementById("rekapTableBody");
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="py-10 text-center text-slate-500">
+            <i class="fa-solid fa-spinner fa-spin text-2xl text-emerald-600 mb-2"></i>
+            <p>Mengambil data rekap pengaduan terbaru...</p>
+          </td>
+        </tr>`;
+
+      try {
+        const res = await fetch(GAS_WEB_APP_URL + "?action=getRekap");
+        const result = await res.json();
+        if (result.status === "success") {
+          allComplaintsData = result.data || [];
+          updateStatistics();
+          renderRekapTable();
+        }
+      } catch (err) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="py-8 text-center text-red-600 font-semibold">
+              Gagal memuat data. Pastikan URL Web App GAS sudah benar dan telah di-deploy dengan akses "Anyone / Siapa saja".
+            </td>
+          </tr>`;
+      }
+    }
+
+    function updateStatistics() {
+      const total = allComplaintsData.length;
+      const sudah = allComplaintsData.filter(x => x.status === "Sudah Direspon").length;
+      const belum = total - sudah;
+
+      document.getElementById("statTotal").innerText = total;
+      document.getElementById("statBelum").innerText = belum;
+      document.getElementById("statSudah").innerText = sudah;
+    }
+
+    function setFilterStatus(status) {
+      currentFilterStatus = status;
+      document.getElementById("filterAll").className = status === "ALL"
+        ? "px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-white"
+        : "px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700";
+      document.getElementById("filterBelum").className = status === "Belum Direspon"
+        ? "px-3 py-1.5 rounded-lg text-xs font-bold bg-red-600 text-white"
+        : "px-3 py-1.5 rounded-lg text-xs font-bold bg-red-100 text-red-700";
+      document.getElementById("filterSudah").className = status === "Sudah Direspon"
+        ? "px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white"
+        : "px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-800";
+      renderRekapTable();
+    }
+
+    function renderRekapTable() {
+      const tbody = document.getElementById("rekapTableBody");
+      const query = (document.getElementById("searchInput").value || "").toLowerCase();
+      const thAksi = document.getElementById("thAksiPimpinan");
+
+      if (currentAdmin) {
+        thAksi.classList.remove("hidden");
+      } else {
+        thAksi.classList.add("hidden");
+      }
+
+      const filtered = allComplaintsData.filter(item => {
+        const matchStatus = currentFilterStatus === "ALL" || item.status === currentFilterStatus;
+        const matchSearch =
+          item.nama.toLowerCase().includes(query) ||
+          item.isiAduan.toLowerCase().includes(query) ||
+          item.kategori.toLowerCase().includes(query) ||
+          item.idAduan.toLowerCase().includes(query);
+        return matchStatus && matchSearch;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="py-10 text-center text-slate-500 font-medium">
+              Tidak ada data pengaduan yang sesuai dengan filter.
+            </td>
+          </tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map((item, idx) => {
+        const isSudah = item.status === "Sudah Direspon";
+        const rowClass = isSudah ? "row-sudah" : "row-belum";
+        const badgeHtml = isSudah
+          ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-extrabold bg-emerald-600 text-white shadow-xs">
+               <i class="fa-solid fa-circle-check"></i> SUDAH DIRESPON
+             </span>`
+          : `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-extrabold bg-red-600 text-white shadow-xs">
+               <i class="fa-solid fa-circle-exclamation"></i> BELUM DIRESPON
+             </span>`;
+
+        const safePhotoSrc = getSafeImageSource(item);
+        const maskedWa = currentAdmin
+          ? item.noWa
+          : item.noWa.substring(0, 4) + "****" + item.noWa.substring(item.noWa.length - 3);
+
+        const responHtml = isSudah
+          ? `<div class="mt-2 p-2.5 rounded-lg bg-white/90 border border-emerald-300 text-xs">
+               <p class="font-bold text-emerald-900">${escapeHtml(item.dijawabOleh)}:</p>
+               <p class="text-slate-700 mt-0.5 whitespace-pre-line">${escapeHtml(item.respon)}</p>
+               <p class="text-[10px] text-slate-400 mt-1"><i class="fa-regular fa-clock"></i> Dijawab: ${escapeHtml(item.waktuRespon)}</p>
+             </div>`
+          : `<p class="text-xs text-red-700 font-semibold italic mt-1">Menunggu tanggapan pimpinan...</p>`;
+
+        const aksiColumn = currentAdmin
+          ? `<td class="py-3.5 px-4 text-center align-top">
+               <button onclick='openResponModal(${JSON.stringify(item).replace(/'/g, "&#39;")})'
+                 class="bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-2 rounded-xl text-xs font-bold shadow flex items-center justify-center gap-1.5 mx-auto whitespace-nowrap">
+                 <i class="fa-brands fa-whatsapp text-sm"></i> ${isSudah ? "Edit / Kirim WA Lagi" : "Respon & Balas WA"}
+               </button>
+             </td>`
+          : "";
+
+        return `
+          <tr class="${rowClass} transition">
+            <td class="py-3.5 px-4 align-top whitespace-nowrap">
+              <span class="font-extrabold text-slate-800">#${idx + 1}</span>
+              <p class="text-[11px] font-bold text-emerald-800 mt-0.5">${escapeHtml(item.idAduan)}</p>
+              <p class="text-[11px] text-slate-600"><i class="fa-regular fa-calendar"></i> ${escapeHtml(item.tanggal)}</p>
+            </td>
+            <td class="py-3.5 px-4 align-top">
+              <p class="font-bold text-slate-900">${escapeHtml(item.nama)}</p>
+              <p class="text-xs text-slate-600 mt-0.5"><i class="fa-brands fa-whatsapp text-emerald-600"></i> ${escapeHtml(maskedWa)}</p>
+              <p class="text-[11px] text-slate-500 mt-0.5"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(item.alamat)}</p>
+            </td>
+            <td class="py-3.5 px-4 align-top max-w-md">
+              <span class="inline-block px-2 py-0.5 rounded bg-slate-800 text-white text-[10px] font-bold uppercase mb-1">
+                ${escapeHtml(item.kategori)}
+              </span>
+              <p class="text-slate-800 whitespace-pre-line leading-relaxed">${escapeHtml(item.isiAduan)}</p>
+            </td>
+            <td class="py-3.5 px-4 align-top text-center">
+              <img
+                src="${safePhotoSrc}"
+                referrerpolicy="no-referrer"
+                alt="Foto ${escapeHtml(item.nama)}"
+                onclick="openPhotoModal('${safePhotoSrc}', '${escapeHtml(item.nama)}')"
+                onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(item.nama)}&background=065f46&color=fff';"
+                class="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-xl mx-auto border-2 border-white shadow cursor-pointer hover:scale-105 transition"
+              />
+              <span class="text-[10px] text-slate-500 block mt-1">Klik perbesar</span>
+            </td>
+            <td class="py-3.5 px-4 align-top max-w-sm">
+              ${badgeHtml}
+              ${responHtml}
+            </td>
+            ${aksiColumn}
+          </tr>
+        `;
+      }).join("");
+    }
+
+    // 7. Login & Logout Pimpinan
+    function handleAuthButtonClick() {
+      if (currentAdmin) {
+        switchTab("rekap");
+      } else {
+        document.getElementById("modalLogin").classList.remove("hidden");
+        document.getElementById("modalLogin").classList.add("flex");
+      }
+    }
+
+    function closeLoginModal() {
+      document.getElementById("modalLogin").classList.add("hidden");
+      document.getElementById("modalLogin").classList.remove("flex");
+    }
+
+    async function submitLogin(e) {
+      e.preventDefault();
+      const btn = document.getElementById("btnLoginSubmit");
+      btn.disabled = true;
+      btn.innerText = "Memverifikasi...";
+
+      try {
+        const res = await fetch(GAS_WEB_APP_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "login",
+            username: document.getElementById("loginUser").value,
+            password: document.getElementById("loginPass").value
+          })
+        });
+        const result = await res.json();
+
+        if (result.status === "success") {
+          currentAdmin = {
+            role: result.role,
+            namaJabatan: result.namaJabatan
+          };
+          localStorage.setItem("dumas_admin_session", JSON.stringify(currentAdmin));
+          applyAdminUI();
+          closeLoginModal();
+          switchTab("rekap");
+          Swal.fire("Login Berhasil", "Selamat datang, " + currentAdmin.namaJabatan, "success");
+        } else {
+          Swal.fire("Gagal Masuk", result.message, "error");
+        }
+      } catch (err) {
+        Swal.fire("Error", "Gagal menghubungi server GAS.", "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Masuk";
+      }
+    }
+
+    function applyAdminUI() {
+      if (currentAdmin) {
+        document.getElementById("adminBanner").classList.remove("hidden");
+        document.getElementById("loggedRoleName").innerText = currentAdmin.namaJabatan;
+        document.getElementById("authBtnText").innerText = "Panel Pimpinan";
+      } else {
+        document.getElementById("adminBanner").classList.add("hidden");
+        document.getElementById("authBtnText").innerText = "Login Pimpinan";
+      }
+      renderRekapTable();
+    }
+
+    function logoutAdmin() {
+      currentAdmin = null;
+      localStorage.removeItem("dumas_admin_session");
+      applyAdminUI();
+      Swal.fire("Berhasil Keluar", "Anda telah keluar dari mode pimpinan.", "info");
+    }
+
+    // 8. Menu Khusus Admin: Ubah Token Fonnte, No HP Waka Humas & No HP Kepala Sekolah
+    async function openSettingsModal() {
+      document.getElementById("modalSettings").classList.remove("hidden");
+      document.getElementById("modalSettings").classList.add("flex");
+
+      try {
+        const res = await fetch(GAS_WEB_APP_URL + "?action=getSettings");
+        const result = await res.json();
+        if (result.status === "success" && result.data) {
+          document.getElementById("settingTokenFonnte").value = result.data.fonnteToken || "";
+          document.getElementById("settingWaHumas").value = result.data.waHumas || "";
+          document.getElementById("settingWaKepsek").value = result.data.waKepsek || "";
+        }
+      } catch (err) {
+        console.error("Gagal memuat pengaturan:", err);
+      }
+    }
+
+    function closeSettingsModal() {
+      document.getElementById("modalSettings").classList.add("hidden");
+      document.getElementById("modalSettings").classList.remove("flex");
+    }
+
+    async function submitSaveSettings(e) {
+      e.preventDefault();
+      const btn = document.getElementById("btnSaveSettings");
+      const originalHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+
+      const payload = {
+        action: "saveSettings",
+        fonnteToken: document.getElementById("settingTokenFonnte").value,
+        waHumas: document.getElementById("settingWaHumas").value,
+        waKepsek: document.getElementById("settingWaKepsek").value
+      };
+
+      try {
+        const res = await fetch(GAS_WEB_APP_URL, {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+
+        if (result.status === "success") {
+          closeSettingsModal();
+          Swal.fire("Tersimpan!", result.message, "success");
+        } else {
+          Swal.fire("Gagal", result.message || "Gagal menyimpan pengaturan.", "error");
+        }
+      } catch (err) {
+        Swal.fire("Error", "Gagal menghubungi server Google Apps Script.", "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+      }
+    }
+
+    // 9. Respon Pimpinan & Kirim Balasan WA Secara Mandiri (Tanpa Fonnte)
+    function openResponModal(item) {
+      selectedComplaintForReply = item;
+      document.getElementById("responIdAduan").value = item.idAduan;
+      document.getElementById("responPejabat").value = currentAdmin ? currentAdmin.namaJabatan : "Pimpinan MTsN 3 Banyuwangi";
+      document.getElementById("responIsi").value = item.respon || "";
+
+      document.getElementById("detailAduanModal").innerHTML = `
+        <p><strong>ID Aduan:</strong> ${escapeHtml(item.idAduan)} (${escapeHtml(item.tanggal)})</p>
+        <p><strong>Pengadu:</strong> ${escapeHtml(item.nama)} — <span class="text-emerald-700 font-bold">${escapeHtml(item.noWa)}</span></p>
+        <p><strong>Isi ${escapeHtml(item.kategori)}:</strong> "${escapeHtml(item.isiAduan)}"</p>
+      `;
+
+      document.getElementById("modalRespon").classList.remove("hidden");
+      document.getElementById("modalRespon").classList.add("flex");
+    }
+
+    function closeResponModal() {
+      document.getElementById("modalRespon").classList.add("hidden");
+      document.getElementById("modalRespon").classList.remove("flex");
+    }
+
+    async function submitResponPimpinan(e) {
+      e.preventDefault();
+      if (!selectedComplaintForReply) return;
+
+      const idAduan = document.getElementById("responIdAduan").value;
+      const dijawabOleh = document.getElementById("responPejabat").value;
+      const isiRespon = document.getElementById("responIsi").value;
+
+      const btn = document.getElementById("btnSubmitRespon");
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+
+      try {
+        const res = await fetch(GAS_WEB_APP_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "submitRespon",
+            idAduan: idAduan,
+            dijawabOleh: dijawabOleh,
+            isiRespon: isiRespon
+          })
+        });
+        const result = await res.json();
+
+        if (result.status === "success") {
+          closeResponModal();
+          await fetchRekapData();
+
+          // Konversi awalan 0 ke 62 HANYA saat membuka link wa.me (di Sheet tetap tersimpan 08xx)
+          let targetPhone = String(selectedComplaintForReply.noWa).replace(/[^0-9]/g, "");
+          if (targetPhone.startsWith("0")) targetPhone = "62" + targetPhone.substring(1);
+
+          const waText =
+            `Assalamu'alaikum Wr. Wb.\n` +
+            `Yth. Bapak/Ibu *${selectedComplaintForReply.nama}*,\n\n` +
+            `Terima kasih atas ${selectedComplaintForReply.kategori} yang telah Anda sampaikan melalui layanan *DUMAS MTsN 3 Banyuwangi* (ID: *${idAduan}*).\n\n` +
+            `*Isi Laporan Anda:*\n"${selectedComplaintForReply.isiAduan}"\n\n` +
+            `*Tanggapan / Jawaban Resmi (${dijawabOleh}):*\n${isiRespon}\n\n` +
+            `Demikian tanggapan ini kami sampaikan. Terima kasih atas kepedulian dan kerja sama Anda untuk kemajuan MTsN 3 Banyuwangi.\n` +
+            `Wassalamu'alaikum Wr. Wb.`;
+
+          const waUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(waText)}`;
+          window.open(waUrl, "_blank");
+        } else {
+          Swal.fire("Gagal", result.message, "error");
+        }
+      } catch (err) {
+        Swal.fire("Error", "Gagal menyimpan respon ke server.", "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-brands fa-whatsapp text-base"></i> Simpan Respon & Kirim WA ke Pengadu';
+      }
+    }
+
+    // 10. Modal Preview Foto & QR Code
+    function openPhotoModal(src, nama) {
+      document.getElementById("modalPhotoImg").src = src;
+      document.getElementById("modalPhotoCaption").innerText = "Foto Pengadu: " + nama;
+      document.getElementById("modalPhoto").classList.remove("hidden");
+      document.getElementById("modalPhoto").classList.add("flex");
+    }
+
+    function closePhotoModal() {
+      document.getElementById("modalPhoto").classList.add("hidden");
+      document.getElementById("modalPhoto").classList.remove("flex");
+    }
+
+    function showQrModal() {
+      const currentUrl = window.location.href;
+      document.getElementById("qrImage").src =
+        "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" + encodeURIComponent(currentUrl);
+      document.getElementById("qrUrlText").innerText = currentUrl;
+      document.getElementById("modalQr").classList.remove("hidden");
+      document.getElementById("modalQr").classList.add("flex");
+    }
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const saved = localStorage.getItem("dumas_admin_session");
+      if (saved) {
+        try {
+          currentAdmin = JSON.parse(saved);
+          applyAdminUI();
+        } catch (e) {}
+      }
+    });
+  </script>
+</body>
+</html>
